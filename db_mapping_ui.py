@@ -1,5 +1,6 @@
 ﻿import tkinter as tk
 from tkinter import ttk, messagebox, PhotoImage, filedialog
+import auth_config
 from dbconnector import DBConnector
 from auth_config import ApiAuth
 import httpx
@@ -10,24 +11,16 @@ import json
 import time
 
 class DBFormApp(tk.Frame):
-    def __init__(self, parent, db_type, db_handler):
+    def __init__(self, parent, db_type, db_handler, auth):
         super().__init__(parent)
         self.root = parent
         self.dbtype = db_type
         self.dbconnector = DBConnector(db_type, db_handler)
+        self.auth = auth  # ✅ Use the passed-in ApiAuth
 
         self.method_var = tk.StringVar(value="GET")
         self.api_path_var = tk.StringVar()
         self.table_var = tk.StringVar()
-
-        # Auth-related StringVars remain in the UI, but logic is moved to ApiAuth
-        self.token_var = tk.StringVar()
-        self.api_key_var = tk.StringVar()
-        self.username_var = tk.StringVar()
-        self.password_var = tk.StringVar()
-
-        # Create ApiAuth and pass the StringVars so it reads current UI values dynamically
-        self.auth = ApiAuth(self.token_var, self.api_key_var, self.username_var, self.password_var)
 
         self.fields_frame = None
         self.inputs = {}
@@ -212,9 +205,10 @@ class DBFormApp(tk.Frame):
         url = self.api_path_var.get().strip()
         payload = {col: entry.get() for col, entry in self.inputs.items()}
         params = {col: entry.get().strip() for col, entry in self.inputs.items() if entry.get().strip()}
-        headers = self.build_auth_headers()
-        auth = self.build_basic_auth()
-
+        headers = self.auth.build_headers()
+        auth = self.auth.build_basic_auth()
+        print("Headers:", headers)
+        print("Auth:", auth)
         try:
             async with httpx.AsyncClient() as client:
                 t0 = time.perf_counter()

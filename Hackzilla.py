@@ -122,7 +122,7 @@ class HackzillaApp:
             widget.destroy()
 
         # Load DBFormApp into Tab 1
-        self.db_ui_frame = DBFormApp(self.db_tab, self.db_type_var.get(), self.connection)
+        self.db_ui_frame = DBFormApp(self.db_tab, self.db_type_var.get(), self.connection, auth=self.auth_ui.auth)
         self.db_ui_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
 # --- Launch ---

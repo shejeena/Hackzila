@@ -63,6 +63,51 @@ def test_authconfigui_preview_auth_calls_messagebox(monkeypatch, tk_root):
     assert captured.get("title") == "Auth Preview"
     # as_dict() is formatted into the message string; check substrings
     assert "'token': 't1'" in captured.get("msg", "")
-    assert "'api_key': 'k1'" in captured.get("msg", "")
+    assert "'api_key': 'k1'" in captured.get("msg", "")                     
     assert "'username': 'u1'" in captured.get("msg", "")
+    import unittest
+    from unittest.mock import MagicMock, patch
+    import sys
+
+    # Patch tkinter and ttk to avoid GUI dependency
+    sys.modules['tkinter'] = MagicMock()
+    sys.modules['tkinter.ttk'] = MagicMock()
+    sys.modules['tkinter.messagebox'] = MagicMock()
+
+    from auth_config import ApiAuth, AuthConfigUI
+
+    class TestApiAuth(unittest.TestCase):
+        def setUp(self):
+            # Mock StringVars
+            self.token_var = MagicMock()
+            self.api_key_var = MagicMock()
+            self.username_var = MagicMock()
+            self.password_var = MagicMock()
+
+        def test_build_headers_token_and_key(self):
+            self.token_var.get.return_value = "token123"
+            self.api_key_var.get.return_value = "key456"
+            auth = ApiAuth(self.token_var, self.api_key_var, self.username_var, self.password_var)
+            headers = auth.build_headers()
+            self.assertEqual(headers["Authorization"], "Bearer token123")
+            self.assertEqual(headers["x-api-key"], "key456")
+
+        def test_build_headers_empty(self):
+            self.token_var.get.return_value = ""
+            self.api_key_var.get.return_value = ""
+            auth = ApiAuth(self.token_var, self.api_key_var, self.username_var, self.password_var)
+            headers = auth.build_headers()
+            self.assertEqual(headers, {})
+
+        def test_build_basic_auth(self):
+            self.username_var.get.return_value = "user"
+            self.password_var.get.return_value = "pass"
+            auth = ApiAuth(self.token_var, self.api_key_var, self.username_var, self.password_var)
+            basic = auth.build_basic_auth()
+            self.assertEqual(basic, ("user", "pass"))
+
+        def test_build_basic_auth_empty(self):
+            self.username_var.get.return_value = ""
+            self.password_var.get.return_value = ""
+            auth = ApiAuth(self.token_var, self.api_key_var, self.username_var, self.password_var)
     assert "'password': 'p1'" in captured.get("msg", "")
